@@ -1,15 +1,26 @@
 package com.minzou.learn;
 
+import android.app.Activity;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private int[] num = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; // 整数数组
+    private String[] twoSame = {"00", "11", "22", "33", "44", "55", "66", "77", "88", "99"};
+    private String[] threeSame = {"000", "111", "222", "333", "444", "555", "666", "777", "888", "999"};
     private String[] twoStar1 = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"};
     private String[] twoStar2 = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "11", "12", "13", "14", "15", "16", "17", "18", "19", "22", "23", "24", "25", "26", "27", "28", "29", "33", "34", "35", "36", "37", "38", "39", "44", "45", "46", "47", "48", "49", "55", "56", "57", "58", "59", "66", "67", "68", "69", "77", "78", "79", "88", "89", "99"};
     private String[] twoStar2_eXX = {"01", "02", "03", "04", "05", "06", "07", "08", "09", "12", "13", "14", "15", "16", "17", "18", "19", "23", "24", "25", "26", "27", "28", "29", "34", "35", "36", "37", "38", "39", "45", "46", "47", "48", "49", "56", "57", "58", "59", "67", "68", "69", "78", "79", "89"};
@@ -30,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
             "188", "189", "199", "223", "224", "225", "226", "227", "228", "229", "233", "234", "235", "236", "237", "238", "239", "244", "245", "246", "247", "248", "249", "255", "256", "257", "258", "259", "266", "267", "268", "269", "277", "278", "279", "288", "289", "299", "334", "335", "336", "337", "338", "339", "344", "345", "346", "347", "348", "349", "355", "356", "357", "358", "359", "366", "367", "368", "369", "377", "378", "379", "388", "389", "399", "445", "446", "447", "448", "449", "455", "456", "457", "458", "459", "466", "467", "468", "469", "477", "478", "479", "488", "489", "499", "556", "557", "558", "559", "566", "567", "568", "569", "577", "578", "579",
             "588", "589", "599", "667", "668", "669", "677", "678", "679", "688", "689", "699", "778", "779", "788", "789", "799", "889", "899"};
 
+    private JSONArray array = new JSONArray();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,35 +50,36 @@ public class MainActivity extends AppCompatActivity {
         TextView mTv = (TextView) findViewById(R.id.mTv);
         for (int i = 1; i < 10; i++) {
             //二星直选 出12
-            mTv.setText(two_D_Out_12(twoStar1, i));
+            mTv.setText(two_D_Out_12(twoStar1, i, "做号 二星直选"));
         }
 
         for (int i = 1; i < 10; i++) {
             //二星混选 出12
-            mTv.setText(two_D_Out_12(twoStar2_eXX, i));
+            mTv.setText(two_D_Out_12(twoStar2_eXX, i, "做号 二星混选"));
         }
 
         for (int i = 1; i < 10; i++) {
             //三星直选 出123
-            mTv.setText(two_D_Out_12(threeStar1, i));
+            mTv.setText(two_D_Out_12(threeStar1, i, "做号 三星直选"));
         }
 
         for (int i = 1; i < 10; i++) {
             //三星混选 出123
-            mTv.setText(two_D_Out_12(threeStar2_eXXX, i));
+            mTv.setText(two_D_Out_12(threeStar2_eXXX, i, "做号 三星混选"));
         }
 
     }
 
     private String result;
     private String allResult;
+    private JSONObject object;
 
     /**
      * @param temNum 出多少个数
      * @return
      */
 
-    private String two_D_Out_12(String[] nums, int temNum) {
+    private String two_D_Out_12(String[] nums, int temNum, String question) {
         allResult = "";
         List<int[]> list = combination(num, temNum);
         for (int a = 0; a < list.size(); a++) {
@@ -80,6 +94,16 @@ public class MainActivity extends AppCompatActivity {
                             result += nums[j] + " ";
                         }
                     }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
+                    }
                     System.out.println(temp[0] + "--" + result);
                     allResult += result + "\n";
                     break;
@@ -90,17 +114,35 @@ public class MainActivity extends AppCompatActivity {
                             result += nums[j] + " ";
                         }
                     }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
+                    }
                     System.out.println(temp[0] + "" + temp[1] + "--" + result);
                     allResult += result + "\n";
                     break;
                 case 3:
                     result = "";
-                    int abc = 0;
                     for (int j = 0; j < nums.length; j++) {
                         if (nums[j].contains(temp[0] + "") || nums[j].contains(temp[1] + "") || nums[j].contains(temp[2] + "")) {
                             result += nums[j] + " ";
-                            System.out.println(abc++ + "");
                         }
+                    }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
                     }
                     System.out.println(temp[0] + "" + temp[1] + "" + temp[2] + "--" + result);
                     allResult += result + "\n";
@@ -115,6 +157,16 @@ public class MainActivity extends AppCompatActivity {
                                 ) {
                             result += nums[j] + " ";
                         }
+                    }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2] + "" + temp[3]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
                     }
                     System.out.println(temp[0] + ""
                             + temp[1] + ""
@@ -134,6 +186,16 @@ public class MainActivity extends AppCompatActivity {
                                 ) {
                             result += nums[j] + " ";
                         }
+                    }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2] + "" + temp[3] + "" + temp[4]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
                     }
                     System.out.println(temp[0] + ""
                             + temp[1] + ""
@@ -155,6 +217,16 @@ public class MainActivity extends AppCompatActivity {
                                 ) {
                             result += nums[j] + " ";
                         }
+                    }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2] + "" + temp[3] + "" + temp[4] + "" + temp[5]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
                     }
                     System.out.println(temp[0] + ""
                             + temp[1] + ""
@@ -178,6 +250,16 @@ public class MainActivity extends AppCompatActivity {
                                 ) {
                             result += nums[j] + " ";
                         }
+                    }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2] + "" + temp[3] + "" + temp[4] + "" + temp[5] + "" + temp[6]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
                     }
                     System.out.println(temp[0] + ""
                             + temp[1] + ""
@@ -203,6 +285,16 @@ public class MainActivity extends AppCompatActivity {
                                 ) {
                             result += nums[j] + " ";
                         }
+                    }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2] + "" + temp[3] + "" + temp[4] + "" + temp[5] + "" + temp[6] + "" + temp[7]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
                     }
                     System.out.println(temp[0] + ""
                             + temp[1] + ""
@@ -231,6 +323,16 @@ public class MainActivity extends AppCompatActivity {
                             result += nums[j] + " ";
                         }
                     }
+                    try {
+                        object = new JSONObject();
+                        object.put("Answer", result);
+                        object.put("Question", question + " " + temp[0] + "" + temp[1] + "" + temp[2] + "" + temp[3] + "" + temp[4] + "" + temp[5] + "" + temp[6] + "" + temp[8]);
+                        object.put("IsEnabled", 1);
+                        object.put("Mode", 0);
+                        object.put("TimeDb", 1499751787);
+                        array.put(object);
+                    } catch (Exception e) {
+                    }
                     System.out.println(temp[0] + ""
                             + temp[1] + ""
                             + temp[2] + ""
@@ -245,7 +347,8 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }
-
+        saveToSDCard(this, "minzou.askdb", array.toString());
+        System.out.println(array.toString());
 
         return allResult;
     }
@@ -360,5 +463,56 @@ public class MainActivity extends AppCompatActivity {
             System.out.print(a[i]);
         }
         System.out.println();
+    }
+
+
+    /**
+     * 保存json到本地
+     *
+     * @param mActivity
+     * @param filename
+     * @param content
+     */
+
+    public static File dir = new File(Environment.getExternalStorageDirectory() + "/json/");
+
+
+    public static void saveToSDCard(Activity mActivity, String filename, String content) {
+
+        String en = Environment.getExternalStorageState();
+
+        //获取SDCard状态,如果SDCard插入了手机且为非写保护状态
+
+        if (en.equals(Environment.MEDIA_MOUNTED)) {
+
+            try {
+
+                dir.mkdirs(); //create folders where write files
+
+                File file = new File(dir, filename);
+
+
+                OutputStream out = new FileOutputStream(file);
+
+                out.write(content.getBytes());
+
+                out.close();
+                Log.e("111", "保存成功");
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+                Log.e("111", "保存失败");
+
+            }
+
+        } else {
+
+            //提示用户SDCard不存在或者为写保护状态
+
+            Log.e("111", "SDCard不存在或者为写保护状态");
+
+        }
+
     }
 }
